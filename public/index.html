@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Academic Buildings | SCUT</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="tierlist.js" defer></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="index.html" aria-label="SCUT home"><span class="brand-icon">S</span>SCUT<span class="brand-divider"></span><span class="brand-caption">Campus building rankings</span></a>
+    <nav aria-label="Main navigation">
+      <a href="#ranker" class="active">Create a tier list</a>
+      <button id="my-list">My saved list</button>
+      <a href="#community">Community rankings</a>
+    </nav>
+    <span class="prototype">PROTOTYPE</span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow">SANTA CLARA UNIVERSITY · CAMPUS BUILDING RANKINGS</p>
+        <h1>Rank the academic buildings<br>at Santa Clara University.</h1>
+        <p class="intro-text">Rate each building based on your experience with its classrooms, facilities and study spaces.<br>Save your ranking or download a copy when you finish.</p>
+        <a href="#ranker" class="primary intro-button">Start ranking</a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="floating-note">Based on student experience</div>
+        <div class="art-row"><b>S</b><span>Excellent</span><span class="tiny-building">▥</span></div>
+        <div class="art-row"><b>A</b><span>Very good</span></div>
+        <div class="art-row"><b>B</b><span>Good</span></div>
+        <div class="art-sticker">10<small>BUILDINGS</small></div>
+      </div>
+    </section>
+
+    <section id="ranker" aria-labelledby="ranker-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">ACADEMIC BUILDINGS</p>
+          <h2 id="ranker-title">Academic buildings<span class="count">10 buildings</span></h2>
+          <p>Place each building in the tier that best reflects your experience.</p>
+        </div>
+        <span class="category">▥ &nbsp; Academic buildings</span>
+      </div>
+
+      <div class="workspace">
+        <div class="ranking">
+          <div class="board-toolbar">
+            <div><span class="live-label">YOUR TIER LIST</span><span id="progress">0 of 10 ranked</span></div>
+            <button id="reset" class="text-button">Reset list</button>
+          </div>
+          <div id="board"></div>
+          <div class="board-bottom">
+            <span>Drag a building into a tier, or select a tier from its dropdown.</span>
+            <span>S = highest · F = lowest</span>
+          </div>
+        </div>
+
+        <aside>
+          <div class="aside-heading">
+            <h3>Unranked buildings</h3>
+            <span id="remaining">10 left</span>
+          </div>
+          <p class="aside-description">Buildings you have not yet placed in a tier.</p>
+          <label class="search">
+            <span aria-hidden="true">⌕</span>
+            <input id="search" type="search" placeholder="Search buildings…" aria-label="Search unranked buildings">
+          </label>
+          <div id="pool" data-tier="unranked" aria-label="Unranked buildings"></div>
+          <p id="empty" hidden></p>
+          <p class="pool-hint">If you have not visited a building, you can leave it unranked.</p>
+        </aside>
+      </div>
+
+      <div class="save-bar">
+        <div>
+          <strong>Save your progress</strong>
+          <p id="save-note">Save a draft in this browser to continue later.</p>
+        </div>
+        <div class="save-actions">
+          <button id="download" class="secondary">Download list</button>
+          <button id="save" class="secondary">Save draft</button>
+          <button id="submit" class="primary">Submit rankings</button>
+        </div>
+      </div>
+      <p class="notice" id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="community" aria-labelledby="community-title" class="community">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">SUBMITTED STUDENT RANKINGS</p>
+          <h2 id="community-title">Community rankings</h2>
+          <p>Average scores from submitted lists. S = 5 through F = 0; unranked buildings do not count.</p>
+        </div>
+      </div>
+      <p id="community-status" role="status" aria-live="polite">Loading rankings…</p>
+      <div id="community-board"></div>
+    </section>
+
+    <section class="how">
+      <div>
+        <span>01</span>
+        <h3>Select buildings</h3>
+        <p>Begin with the buildings you know best.</p>
+      </div>
+      <div>
+        <span>02</span>
+        <h3>Assign tiers</h3>
+        <p>Consider classrooms, comfort and facilities.</p>
+      </div>
+      <div>
+        <span>03</span>
+        <h3>Save your list</h3>
+        <p>Adjust your rankings at any time, then save or download them.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a class="footer-brand" href="index.html">SCUT<span>SCU Tier</span></a>
+    <p>A campus building ranking tool for Santa Clara University students.</p>
+    <span>CSEN 161 · Student project</span>
+  </footer>
+
+  <dialog id="reset-dialog">
+    <h2>Reset your list?</h2>
+    <p>All buildings will return to the unranked list. Your saved list will remain available until you save again.</p>
+    <div class="dialog-actions">
+      <button id="cancel-reset" class="secondary">Cancel</button>
+      <button id="confirm-reset" class="primary">Reset list</button>
+    </div>
+  </dialog>
+</body>
+</html>
