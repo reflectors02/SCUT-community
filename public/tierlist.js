@@ -27,10 +27,21 @@ const dorms = [
 
 
 const food = [
-  { id: 'benson', name: 'Benson Dining', short: 'BN' },
-  { id: 'bronco', name: 'Bronco Corner', short: 'BC' },
-  { id: 'missionBakery', name: 'Mission Bakery', short: 'MB' },
-  { id: 'sunstream', name: 'Sunstream Café', short: 'SC' }
+  { id: 'sesameTofu', name: 'Sesame-Soy Glazed Tofu from Spice Market', short: 'ST' },
+  { id: 'teriyakiChicken', name: 'Teriyaki Chicken from Spice Market', short: 'TC' },
+  { id: 'thaiCurry', name: 'Thai Red Chicken Curry from Spice Market', short: 'RC' },
+  { id: 'locoMoco', name: 'Loco Moco from Global Grill', short: 'LM' },
+  { id: 'guamPlatter', name: 'Guam Fiesta Platter from The Chefs Table', short: 'GF' },
+  { id: 'lomoSaltado', name: 'Lomo Saltado from Simply Oasis', short: 'LS' },
+  { id: 'beanBurrito', name: 'Bean and Cheese Burrito from La Parilla', short: 'BB' },
+  { id: 'smashBurger', name: 'Smash Burger from The Fire', short: 'SB' },
+  { id: 'cheeseburger', name: 'Cheeseburger Combo from The Fire', short: 'CB' },
+  { id: 'crispyTacos', name: 'Crispy Tacos de Papa from La Parilla', short: 'CT' },
+  { id: 'nashvilleTenders', name: 'Nashville Chicken Tenders from The Fire', short: 'NT' },
+  { id: 'pepperoniPizza', name: 'Pepperoni Pizza from The Slice', short: 'PP' },
+  { id: 'pestoPizza', name: 'Pesto Burrata Pizza from The Slice', short: 'PB' },
+  { id: 'chickenPizza', name: 'Chicken Supreme Pizza from The Slice', short: 'CP' },
+  { id: 'meatballSub', name: 'Meatball Sub from The Slice', short: 'MS' }
 ];
 
 

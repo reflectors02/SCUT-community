@@ -15,7 +15,7 @@ $scores = ['S' => 5, 'A' => 4, 'B' => 3, 'C' => 2, 'D' => 1, 'F' => 0];
 $categories = [
     'academic' => ['sCDI', 'heafey', 'oconnor', 'kenna', 'daly', 'lucas', 'vari', 'bergin', 'alumni', 'charney'],
     'dorms' => ['sobratoHall', 'graham', 'finn', 'swig', 'dunne', 'mclaughlinWalsh', 'campisi', 'sanfilippo', 'casaItaliana'],
-    'food' => ['benson', 'bronco', 'missionBakery', 'sunstream']
+    'food' => ['sesameTofu', 'teriyakiChicken', 'thaiCurry', 'locoMoco', 'guamPlatter', 'lomoSaltado', 'beanBurrito', 'smashBurger', 'cheeseburger', 'crispyTacos', 'nashvilleTenders', 'pepperoniPizza', 'pestoPizza', 'chickenPizza', 'meatballSub']
 ];
 
 $category = $_GET['category'] ?? 'academic';
