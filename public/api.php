@@ -9,9 +9,21 @@ if (!isset($_SESSION['voter'])) {
     $_SESSION['voter'] = bin2hex(random_bytes(24));
 }
 
+
 $scores = ['S' => 5, 'A' => 4, 'B' => 3, 'C' => 2, 'D' => 1, 'F' => 0];
-$ids = ['sCDI', 'heafey', 'oconnor', 'kenna', 'daly', 'lucas', 'vari', 'bergin', 'alumni', 'charney'];
+
+$categories = [
+    'academic' => ['sCDI', 'heafey', 'oconnor', 'kenna', 'daly', 'lucas', 'vari', 'bergin', 'alumni', 'charney'],
+    'dorms' => ['sobratoHall', 'graham', 'finn', 'swig', 'dunne', 'mclaughlinWalsh', 'campisi', 'sanfilippo', 'casaItaliana'],
+    'food' => ['benson', 'bronco', 'missionBakery', 'sunstream']
+];
+
+$category = $_GET['category'] ?? 'academic';
+if (!array_key_exists($category, $categories)) respond(400, ['error' => 'Invalid category.']);
+
+$ids = $categories[$category];
 $path = dirname(__DIR__) . '/data/submissions.json';
+
 
 // Pre: code is an HTTP status and body is JSON-serializable.
 // Post: Sends the JSON response and ends the request.
@@ -70,14 +82,44 @@ try {
     $raw = stream_get_contents($file);
     $submissions = $raw === '' ? [] : json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
     if (!is_array($submissions)) throw new RuntimeException('Invalid stored data');
+    
     if ($method === 'POST') {
-        $submissions[$_SESSION['voter']] = $ranking;
+        $voter = $_SESSION['voter'];
+
+        if (!isset($submissions[$voter]['academic']) &&
+            !isset($submissions[$voter]['dorms']) &&
+            !isset($submissions[$voter]['food']) &&
+            isset($submissions[$voter]) &&
+            is_array($submissions[$voter])) {
+            $submissions[$voter] = ['academic' => $submissions[$voter]];
+        }
+
+        $submissions[$voter][$category] = $ranking;
+
         $json = json_encode($submissions, JSON_THROW_ON_ERROR);
         rewind($file);
         if (fwrite($file, $json) !== strlen($json) || !ftruncate($file, strlen($json)) || !fflush($file)) throw new RuntimeException('Write failed');
     }
-    $mine = $submissions[$_SESSION['voter']] ?? null;
-    $summary = community($submissions, $ids, $scores);
+
+    $voter = $_SESSION['voter'];
+    $mine = $submissions[$voter][$category] ?? null;
+
+    if ($category === 'academic' && $mine === null && !empty(array_intersect_key($submissions[$voter] ?? [], array_flip($categories['academic'])))) {
+        $mine = $submissions[$voter];
+    }
+
+    $categorySubmissions = [];
+
+    foreach ($submissions as $voterRanking) {
+        if (isset($voterRanking[$category]) && is_array($voterRanking[$category])) {
+            $categorySubmissions[] = $voterRanking[$category];
+        } elseif ($category === 'academic' && !empty(array_intersect_key($voterRanking, array_flip($categories['academic'])))) {
+            $categorySubmissions[] = $voterRanking;
+        }
+    }
+
+    $summary = community($categorySubmissions, $ids, $scores);
+
     flock($file, LOCK_UN);
     fclose($file);
     respond(200, ['mine' => $mine, 'community' => $summary]);

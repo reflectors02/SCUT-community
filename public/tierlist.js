@@ -12,6 +12,46 @@ const buildings = [
   { id: 'charney', name: 'Charney Hall', short: 'CH' }
 ];
 
+
+const dorms = [
+  { id: 'sobratoHall', name: 'Sobrato Hall', short: 'SB' },
+  { id: 'graham', name: 'Graham Hall', short: 'GH' },
+  { id: 'finn', name: 'Finn Hall', short: 'FN' },
+  { id: 'swig', name: 'Swig Hall', short: 'SW' },
+  { id: 'dunne', name: 'Dunne Hall', short: 'DN' },
+  { id: 'mclaughlinWalsh', name: 'McLaughlin-Walsh Hall', short: 'MW' },
+  { id: 'campisi', name: 'Campisi Hall', short: 'CP' },
+  { id: 'sanfilippo', name: 'Sanfilippo Hall', short: 'SF' },
+  { id: 'casaItaliana', name: 'Casa Italiana', short: 'CI' }
+];
+
+
+const food = [
+  { id: 'benson', name: 'Benson Dining', short: 'BN' },
+  { id: 'bronco', name: 'Bronco Corner', short: 'BC' },
+  { id: 'missionBakery', name: 'Mission Bakery', short: 'MB' },
+  { id: 'sunstream', name: 'Sunstream Café', short: 'SC' }
+];
+
+
+const categories = {
+  academic: {
+    title: 'Academic Buildings',
+    items: buildings
+  },
+
+  dorms: {
+    title: 'SCU Dorms',
+    items: dorms
+  },
+
+  food: {
+    title: 'Campus Food',
+    items: food
+  }
+};
+
+
 const tiers = ['S', 'A', 'B', 'C', 'D', 'F'];
 
 const hints = [
@@ -23,15 +63,29 @@ const hints = [
   'Not recommended'
 ];
 
-const storageKey = 'scut-academic-draft-v1';
+let currentCategory = 'academic';
+
+const storageKeys = {
+    academic: 'scut-academic-draft-v1',
+    dorms: 'scut-dorms-draft-v1',
+    food: 'scut-food-draft-v1'
+};
 
 let ranking = blankRanking();
+
+const categoryRankings = {
+    academic: { ...ranking },
+    dorms: null,
+    food: null
+};
 
 // Pre:  The buildings array is defined and every building has a unique id.
 // Post: Returns a new object that maps every building id to 'unranked'.
 //       The global ranking is not changed.
 function blankRanking() {
-  return Object.fromEntries(buildings.map(building => [building.id, 'unranked']));
+    return Object.fromEntries(
+        categories[currentCategory].items.map(item => [item.id, 'unranked'])
+    );
 }
 
 // Pre:  message is a string, and the page has an element with id "status".
@@ -47,48 +101,62 @@ function announce(message) {
 //       the board is re-rendered and a success message is announced.
 //       If there is no draft, ranking is unchanged and a "no saved list" message is announced.
 //       If reading or parsing fails, an error message is announced. Nothing is thrown.
+
 function loadSaved() {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) {
-      announce('No saved list yet. Rank a few buildings, then select Save draft.');
-      return;
+    try {
+        const raw = localStorage.getItem(storageKeys[currentCategory]);
+
+        if (!raw) {
+            announce('No saved list yet. Rank a few items, then select Save draft.');
+            return;
+        }
+
+        const saved = JSON.parse(raw);
+
+        if (!saved || typeof saved.ranking !== 'object' || saved.ranking === null) {
+            throw new Error('Invalid draft');
+        }
+
+        ranking = blankRanking();
+
+        categories[currentCategory].items.forEach(item => {
+            if (tiers.includes(saved.ranking[item.id])) {
+                ranking[item.id] = saved.ranking[item.id];
+            }
+        });
+
+        render();
+        announce('Your saved list is loaded.');
+
+    } catch (error) {
+        announce('Your saved list could not be loaded.');
     }
-
-    const saved = JSON.parse(raw);
-    if (!saved || typeof saved.ranking !== 'object' || saved.ranking === null) {
-      throw new Error('Invalid draft');
-    }
-
-    ranking = blankRanking();
-    buildings.forEach(building => {
-      if (tiers.includes(saved.ranking[building.id])) {
-        ranking[building.id] = saved.ranking[building.id];
-      }
-    });
-
-    render();
-    announce('Your saved list is loaded.');
-  } catch (error) {
-    announce('Your saved list could not be loaded in this browser. You can still make and download a list.');
-  }
 }
+
 
 // Pre:  id is a string and tier is a string.
 // Post: If id matches a building and tier is one of tiers or 'unranked',
 //       ranking[id] is tier, the board is re-rendered and the move is announced.
 //       Otherwise nothing changes.
 function moveBuilding(id, tier) {
-  if (!buildings.some(building => building.id === id) || ![...tiers, 'unranked'].includes(tier)) {
-    return;
-  }
+    const items = categories[currentCategory].items;
 
-  ranking[id] = tier;
-  render();
+    if (!items.some(item => item.id === id) ||
+        ![...tiers, 'unranked'].includes(tier)) {
+        return;
+    }
 
-  const building = buildings.find(item => item.id === id);
-  announce(building.name + (tier === 'unranked' ? ' returned to the pool.' : ' moved to tier ' + tier + '.'));
+    ranking[id] = tier;
+    render();
+
+    const item = items.find(item => item.id === id);
+
+    announce(item.name +
+        (tier === 'unranked'
+            ? ' returned to the pool.'
+            : ' moved to tier ' + tier + '.'));
 }
+
 
 // Pre:  building is an object from the buildings array, and ranking[building.id] is set.
 // Post: Returns a new draggable card element (not yet attached to the page). It contains
@@ -183,7 +251,9 @@ function prepareCardDrag(card, id) {
     if (!drag.ghost) {
       const ghost = document.createElement('div');
       ghost.className = 'drag-preview';
-      ghost.textContent = buildings.find(building => building.id === id).name;
+      ghost.textContent = categories[currentCategory].items.find(
+        item => item.id === id
+      ).name;
       ghost.setAttribute('aria-hidden', 'true');
       document.body.append(ghost);
       drag.ghost = ghost;
@@ -241,54 +311,66 @@ function prepareDropZone(zone) {
 //       The pool shows the unranked cards that match the search box.
 //       The "left" count, the progress text and the empty-pool message are up to date.
 //       ranking is not changed.
+
 function render() {
-  const board = document.getElementById('board');
-  board.replaceChildren();
+    const items = categories[currentCategory].items;
 
-  tiers.forEach((tier, index) => {
-    const row = document.createElement('div');
-    row.className = 'tier-row';
+    const board = document.getElementById('board');
+    board.replaceChildren();
 
-    const label = document.createElement('div');
-    label.className = 'tier-label';
-    label.textContent = tier;
-    label.style.background = 'var(--' + tier.toLowerCase() + ')';
+    tiers.forEach((tier, index) => {
+        const row = document.createElement('div');
+        row.className = 'tier-row';
 
-    const zone = document.createElement('div');
-    zone.className = 'tier-drop';
-    zone.dataset.tier = tier;
-    zone.dataset.hint = hints[index];
-    zone.setAttribute('aria-label', 'Tier ' + tier);
+        const label = document.createElement('div');
+        label.className = 'tier-label';
+        label.textContent = tier;
+        label.style.background = 'var(--' + tier.toLowerCase() + ')';
 
-    buildings
-      .filter(building => ranking[building.id] === tier)
-      .forEach(building => zone.append(makeCard(building)));
+        const zone = document.createElement('div');
+        zone.className = 'tier-drop';
+        zone.dataset.tier = tier;
+        zone.dataset.hint = hints[index];
+        zone.setAttribute('aria-label', 'Tier ' + tier);
 
-    prepareDropZone(zone);
-    row.append(label, zone);
-    board.append(row);
-  });
+        items
+            .filter(item => ranking[item.id] === tier)
+            .forEach(item => zone.append(makeCard(item)));
 
-  const pool = document.getElementById('pool');
-  pool.replaceChildren();
+        prepareDropZone(zone);
+        row.append(label, zone);
+        board.append(row);
+    });
 
-  const query = document.getElementById('search').value.trim().toLowerCase();
-  const unranked = buildings.filter(building => ranking[building.id] === 'unranked');
-  const matching = unranked.filter(building =>
-    (building.name + ' ' + building.short).toLowerCase().includes(query)
-  );
+    const pool = document.getElementById('pool');
+    pool.replaceChildren();
 
-  matching.forEach(building => pool.append(makeCard(building)));
+    const query = document.getElementById('search').value.trim().toLowerCase();
 
-  document.getElementById('remaining').textContent = unranked.length + ' left';
-  document.getElementById('progress').textContent =
-    (buildings.length - unranked.length) + ' of ' + buildings.length + ' ranked';
+    const unranked = items.filter(
+        item => ranking[item.id] === 'unranked'
+    );
 
-  const empty = document.getElementById('empty');
-  empty.hidden = matching.length > 0;
-  empty.textContent = unranked.length === 0
-    ? 'All buildings ranked! You can still move them between tiers or return them here.'
-    : 'No matching buildings in the pool.';
+    const matching = unranked.filter(item =>
+        (item.name + ' ' + item.short).toLowerCase().includes(query)
+    );
+
+    matching.forEach(item => pool.append(makeCard(item)));
+
+    document.getElementById('remaining').textContent =
+        unranked.length + ' left';
+
+    document.getElementById('progress').textContent =
+        (items.length - unranked.length) +
+        ' of ' + items.length + ' ranked';
+
+    const empty = document.getElementById('empty');
+
+    empty.hidden = matching.length > 0;
+
+    empty.textContent = unranked.length === 0
+        ? 'All items ranked! You can still move them between tiers.'
+        : 'No matching items in the pool.';
 }
 
 // ----- Event wiring -----
@@ -306,7 +388,10 @@ prepareDropZone(document.getElementById('pool'));
 //       that storage is unavailable if the write fails.
 document.getElementById('save').addEventListener('click', () => {
   try {
-    localStorage.setItem(storageKey, JSON.stringify({ ranking }));
+    localStorage.setItem(
+    storageKeys[currentCategory],
+    JSON.stringify({ ranking })
+      );
     document.getElementById('save-note').textContent = 'Saved on this browser. You can keep editing.';
     announce('Your tier list has been saved.');
   } catch (error) {
@@ -348,11 +433,11 @@ document.getElementById('confirm-reset').addEventListener('click', () => {
 //       released after 1 second. ranking is not changed.
 document.getElementById('download').addEventListener('click', () => {
   const lines = [
-    'SCUT — My academic building tier list',
+    'SCUT — My ' + categories[currentCategory].title.toLowerCase() + ' tier list',
     '',
     ...[...tiers, 'unranked'].map(tier =>
       (tier === 'unranked' ? 'Unranked' : tier) + ': ' +
-      (buildings
+      (categories[currentCategory].items
         .filter(building => ranking[building.id] === tier)
         .map(building => building.name)
         .join(', ') || '—')
@@ -363,7 +448,7 @@ document.getElementById('download').addEventListener('click', () => {
 
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'scut-academic-tier-list.txt';
+  link.download = 'scut-' + currentCategory + '-tier-list.txt';
   link.click();
 
   setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -377,7 +462,7 @@ document.getElementById('download').addEventListener('click', () => {
 //       loaded. If storage cannot be read, a message is announced and the page still works.
 render();
 try {
-  if (localStorage.getItem(storageKey)) {
+  if (localStorage.getItem(storageKeys[currentCategory])) {
     loadSaved();
   }
 } catch (error) {
@@ -398,7 +483,7 @@ function renderCommunity(summary) {
     label.textContent = tier; label.style.background = 'var(--' + tier.toLowerCase() + ')';
     const items = document.createElement('div'); items.className = 'tier-drop';
     items.dataset.hint = 'No ratings in this tier yet';
-    buildings.filter(building => summary[building.id]?.tier === tier)
+    categories[currentCategory].items.filter(building => summary[building.id]?.tier === tier)
       .sort((a, b) => summary[b.id].average - summary[a.id].average)
       .forEach(building => {
         const card = document.createElement('div'); card.className = 'building community-card';
@@ -410,7 +495,7 @@ function renderCommunity(summary) {
       });
     row.append(label, items); board.append(row);
   });
-  const unrated = buildings.filter(building => !summary[building.id]?.count);
+  const unrated = categories[currentCategory].items.filter(building => !summary[building.id]?.count);
   if (unrated.length) {
     const line = document.createElement('p'); line.className = 'unrated';
     line.textContent = 'Not yet rated: ' + unrated.map(building => building.label || building.name).join(', ');
@@ -420,43 +505,187 @@ function renderCommunity(summary) {
 // Pre: api.php is available on the same server and the community elements exist.
 // Post: Returns a promise for the server response and refreshes the community board.
 //       Rejects the promise if the request fails.
+
 async function refreshCommunity() {
-  const response = await fetch('api.php', { cache: 'no-store' });
+  const category = currentCategory;
+  const response = await fetch('api.php?category=' + category, { cache: 'no-store' });
   if (!response.ok) throw new Error('Could not load community rankings.');
   const data = await response.json();
-  renderCommunity(data.community);
-  document.getElementById('community-status').textContent = 'Community rankings are up to date.';
+  if (currentCategory === category) {
+    renderCommunity(data.community);
+    document.getElementById('community-status').textContent = 'Community rankings are up to date.';
+  }
   return data;
 }
+
 // Pre: The submit button exists and ranking contains the current personal list.
 // Post: Clicking submits ranked buildings and replaces this session's previous list.
 //       Success refreshes the community board; failure is announced. Drafts are unchanged.
+
 document.getElementById('submit').addEventListener('click', async event => {
+  const category = currentCategory;
   const submitted = Object.fromEntries(Object.entries(ranking).filter(([, tier]) => tier !== 'unranked'));
-  if (!Object.keys(submitted).length) { announce('Rank at least one building before submitting.'); return; }
+  if (!Object.keys(submitted).length) { announce('Rank at least one item before submitting.'); return; }
   const button = event.currentTarget; button.disabled = true;
   try {
-    const response = await fetch('api.php', {
+    const response = await fetch('api.php?category=' + category, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ranking: submitted })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Submission failed.');
-    renderCommunity(data.community);
-    document.getElementById('community-status').textContent = 'Community rankings are up to date.';
-    announce('Your rankings were submitted. Submitting again from this browser replaces your earlier list.');
+    if (currentCategory === category) {
+      renderCommunity(data.community);
+      document.getElementById('community-status').textContent = 'Community rankings are up to date.';
+    }
+    announce('Your rankings were submitted. Submitting again from this browser replaces your earlier list for this category.');
   } catch (error) { announce(error.message || 'Could not submit rankings.'); }
   finally { button.disabled = false; }
 });
+
 // Pre: Personal rankings and the community elements have been initialized.
 // Post: Loads community totals and restores the submitted list when no local draft exists.
 //       A request failure displays a message.
+
 refreshCommunity().then(data => {
   let hasDraft = false;
-  try { hasDraft = !!localStorage.getItem(storageKey); } catch (error) {}
+  try { hasDraft = !!localStorage.getItem(storageKeys.academic); } catch (error) {}
   if (data.mine && !hasDraft) {
-    ranking = blankRanking();
-    Object.entries(data.mine).forEach(([id, tier]) => { if (id in ranking && tiers.includes(tier)) ranking[id] = tier; });
-    render();
+    const academicRanking = Object.fromEntries(
+      buildings.map(building => [building.id, 'unranked'])
+    );
+    Object.entries(data.mine).forEach(([id, tier]) => {
+      if (id in academicRanking && tiers.includes(tier)) academicRanking[id] = tier;
+    });
+    categoryRankings.academic = { ...academicRanking };
+    if (currentCategory === 'academic') {
+      ranking = academicRanking;
+      render();
+    }
   }
 }).catch(() => { document.getElementById('community-status').textContent = 'Could not load community rankings. Check that the PHP server is running.'; });
+
+document.querySelectorAll('.category-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const selected = button.dataset.category;
+
+        if (!categories[selected] || selected === currentCategory) {
+            return;
+        }
+
+        // Remember unsaved changes in the current category.
+        categoryRankings[currentCategory] = { ...ranking };
+
+        const firstVisit = categoryRankings[selected] === null;
+
+        // Switch to the selected category.
+        currentCategory = selected;
+
+        // Restore this category's in-memory ranking if available.
+        // Otherwise start empty, then check for a saved draft.
+        if (categoryRankings[selected] !== null) {
+            ranking = { ...categoryRankings[selected] };
+        } else {
+            ranking = blankRanking();
+
+            try {
+                const raw = localStorage.getItem(storageKeys[selected]);
+
+                if (raw) {
+                    const saved = JSON.parse(raw);
+
+                    if (saved && saved.ranking) {
+                        categories[selected].items.forEach(item => {
+                            if (tiers.includes(saved.ranking[item.id])) {
+                                ranking[item.id] = saved.ranking[item.id];
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                announce('Could not load saved draft for this category.');
+            }
+
+            categoryRankings[selected] = { ...ranking };
+        }
+
+        // Update the active button.
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.toggle(
+                'active',
+                btn.dataset.category === selected
+            );
+        });
+
+        // Update the heading and category information.
+        const title = categories[selected].title;
+        const count = categories[selected].items.length;
+
+        document.getElementById('ranker-title').replaceChildren(
+            document.createTextNode(title)
+        );
+
+        const countSpan = document.createElement('span');
+        countSpan.className = 'count';
+        countSpan.textContent = count + ' items';
+
+        document.getElementById('ranker-title').append(countSpan);
+
+        document.querySelector('.section-heading .category').textContent = title;
+
+        document.querySelector('.aside-heading h3').textContent =
+            'Unranked items';
+
+        document.querySelector('.aside-description').textContent =
+            'Items you have not yet placed in a tier.';
+
+        document.querySelector('.pool-hint').textContent =
+            'You can leave items you have not experienced unranked.';
+
+        document.getElementById('search').placeholder =
+            'Search ' + title.toLowerCase() + '…';
+
+        document.getElementById('search').value = '';
+
+        document.getElementById('save-note').textContent =
+            'Save a draft in this browser to continue later.';
+
+        
+        render();
+
+        document.getElementById('community-board').replaceChildren();
+        document.getElementById('community-status').textContent = 'Loading community rankings...';
+
+        const initialRanking = ranking;
+        const initialValues = JSON.stringify(ranking);
+
+        refreshCommunity().then(data => {
+            let hasDraft = false;
+
+            try {
+                hasDraft = !!localStorage.getItem(storageKeys[selected]);
+            } catch (error) {}
+
+            if (firstVisit && data.mine && !hasDraft &&
+                currentCategory === selected &&
+                ranking === initialRanking &&
+                JSON.stringify(ranking) === initialValues) {
+
+                categories[selected].items.forEach(item => {
+                    if (tiers.includes(data.mine[item.id])) {
+                        ranking[item.id] = data.mine[item.id];
+                    }
+                });
+
+                categoryRankings[selected] = { ...ranking };
+                render();
+            }
+        }).catch(() => {
+            if (currentCategory === selected) {
+                document.getElementById('community-status').textContent = 'Could not load community rankings.';
+            }
+        });
+
+        announce('Now ranking ' + title + '.');
+    });
+});

@@ -955,3 +955,69 @@ dialog::backdrop {
     box-shadow: 0 4px 14px #0002;
     font-size: 14px;
 }
+
+
+/* Category Selection */
+
+.category-selector {
+    text-align: center;
+    padding: 35px 20px;
+    margin-top: 30px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.category-selector h2 {
+    font-size: 26px;
+    margin-bottom: 10px;
+}
+
+.category-selector p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+.category-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.category-btn {
+    padding: 13px 22px;
+    background: white;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.2s, color 0.2s;
+}
+
+.category-btn:hover {
+    background: #edf1ed;
+}
+
+.category-btn.active {
+    background: var(--red);
+    color: white;
+    border-color: var(--red);
+}
+
+.category-btn.active:hover {
+    background: #79222b;
+}
+
+@media (max-width: 650px) {
+    .category-buttons {
+        flex-direction: column;
+    }
+
+    .category-btn {
+        width: 100%;
+    }
+}
+
